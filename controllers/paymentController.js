@@ -93,6 +93,23 @@ exports.cancelPayment = (req, res, next) => {
 
 exports.denyPayment = (req, res, next) => {
     res.send('Lalalalal')
+    var transactionId = req.body.transactionId
+    if (req.loginType != Student){
+      return res.status(401).send({'message': 'Invalid Action'})
+    }
+    else {
+      Transaction.findById(transactionId, function(err, transaction) {
+        if (err) {
+          console.log(err)
+          return res.status(403).send({'message': 'Bad Request'})
+        }
+        else {
+          transaction.isDenied = true
+          transaction.save()
+          return res.send({message: "Success"})
+        }
+      })
+    }
 }
 
 exports.pendingRequests = (req, res) => {
