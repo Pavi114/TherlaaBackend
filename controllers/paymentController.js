@@ -95,10 +95,68 @@ exports.denyPayment = (req, res, next) => {
     res.send('Lalalalal')
 }
 
-exports.pendingRequests = (req, res, next) => {
-    res.send('Lalalalal')
+exports.pendingRequests = (req, res) => {
+    var userId = req.userId
+    var loginType = req.loginType
+
+    if (loginType !== 'Student') {
+        return req.status(401).send({ message: "Invalid actions" })
+    }
+
+    Transaction.find({ sender: userId, isActive: true, isCompleted: false }, function(err, transactions){
+        if (err) {
+            console.log(err);
+            return res.status(500).send({'message': 'Unknown Error'})
+        }
+        const pendingRequests = []
+        for (let transaction of transactions) {
+            pendingRequests.push({
+                transactionId: transaction._id,
+                receiver: transaction.receiver,
+                amount: transaction.amount
+            })
+        }
+        return res.send({ message: 'Success', pendingRequests: pendingRequests })
+    })
 }
 
-exports.pendingPayments = (req, res, next) => {
-    res.send('Lalalalal')
+exports.pendingPayments = (req, res) => {
+    var userId = req.userId
+
+    Transaction.find({ receiver: userId, isActive: true, isCompleted: false }, function(err, transactions){
+        if (err) {
+            console.log(err);
+            return res.status(500).send({'message': 'Unknown Error'})
+        }
+        const pendingPayments = []
+        for (let transaction of transactions) {
+            pendingPayments.push({
+                transactionId: transaction._id,
+                sender: transaction.sender,
+                amount: transaction.amount
+            })
+        }
+        return res.send({ message: 'Success', pendingPayments: pendingPayments })
+    })
+}
+
+exports.completedTransactions = (req, res) => {
+    var userId = req.userId
+
+    Transaction.find({ $or: [{ receiver: userId }, { sender: userId }], isCompleted: true }, function(err, transactions){
+        if (err) {
+            console.log(err);
+            return res.status(500).send({'message': 'Unknown Error'})
+        }
+        const completedPayments = []
+        for (let transaction of transactions) {
+            completedPayments.push({
+                transactionId: transaction._id,
+                sender: transaction.sender,
+                receiver: transaction.receiver,
+                amount: transaction.amount
+            })
+        }
+        return res.send({ message: 'Success', completedPayments: completedPayments })
+    })
 }
