@@ -8,5 +8,6 @@ router.post('/cancelPayment', paymentController.cancelPayment)
 router.post('/denyPayment', paymentController.denyPayment)
 router.post('/pendingRequests', paymentController.pendingRequests) // To get pending requests on Client
 router.post('/pendingPayments', paymentController.pendingPayments) // To get pending payments on Server
+router.post('/completedTransactions', paymentController.completedTransactions)
 
 module.exports = router
