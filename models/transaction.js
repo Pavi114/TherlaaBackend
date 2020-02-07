@@ -8,9 +8,9 @@ const transactionSchema = new mongoose.Schema({
     receiver: String,
     is_activated: {
       type: Boolean,
-      default: False
+      default: false
     },
     ref_ID: String
 });
 
-module.exports = mongoose('Transaction', transactionSchema)
+module.exports = mongoose.model('Transaction', transactionSchema)
