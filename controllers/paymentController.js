@@ -44,7 +44,31 @@ exports.createPayment = (req, res) => {
 }
 
 exports.registerPayment = (req, res, next) => {
-    res.send('Lalalalal')
+    var userId = req.userId
+    var loginType = req.loginType
+    var transactionId = req.body.transactionId
+    if(loginType != "Student"){
+        return res.status(401).send({'message': 'Invalid Action'})
+    }
+    else{
+        Transaction.findById(transactionId, function(err, transaction){
+            if(err){
+                console.log(err)
+                return res.status(500).send({'message': 'Unknown Error'})
+            }
+            if(transaction.receiver == userId){
+                return res.status(403).send({'message': 'Invalid Action'})
+            }
+            transaction.sender = userId
+            transaction.isActivated = true
+            transaction.save(function(err){
+                if(err){
+                    console.log(err)
+                }
+                return res.status(200).send({'message': 'Success'})
+            })
+        })
+    }
 }
 
 exports.cancelPayment = (req, res, next) => {

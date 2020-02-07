@@ -1,12 +1,13 @@
 const mongoose = require('mongoose')
 
 const transactionSchema = new mongoose.Schema({
-    sender: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Student'
-    },
+    sender: String,
     receiver: String,
-    is_activated: {
+    isActivated: {
+      type: Boolean,
+      default: false
+    },
+    isCompleted: {
       type: Boolean,
       default: false
     },
