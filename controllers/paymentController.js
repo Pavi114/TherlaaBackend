@@ -16,7 +16,7 @@ exports.createPayment = (req, res) => {
             if(vendor.upiId == ""){
                 return res.status(500).send({'message': 'UPI not found'})
             }
-            Transaction.create({receiver: userId, amount: amount}, function(err, newTransaction){
+            Transaction.create({receiver: userId, amount: amount, isReceiverVendor: true}, function(err, newTransaction){
                 if(err){
                     console.log(err)
                 }
@@ -52,7 +52,7 @@ exports.registerPayment = (req, res, next) => {
     }
     else{
         Transaction.findById(transactionId, function(err, transaction){
-            if(err){
+            if(err || !transaction){
                 console.log(err)
                 return res.status(500).send({'message': 'Unknown Error'})
             }
@@ -72,7 +72,23 @@ exports.registerPayment = (req, res, next) => {
 }
 
 exports.cancelPayment = (req, res, next) => {
-    res.send('Lalalalal')
+    var userId = req.userId
+    var transactionId = req.body.transactionId
+
+    Transaction.findOne({_id: transactionId, receiver: userId}, function(err, transaction){
+        if(err || !transaction){
+            console.log(err)
+            return res.status(401).send({'message': 'Invalid Action'})
+        }
+        transaction.isCancelled = true
+        transaction.isActivated = false
+        transaction.save(function(err){
+            if(err){
+                console.log(err)
+            }
+            return res.status(200).send({'message': 'Success'})
+        })
+    })
 }
 
 exports.denyPayment = (req, res, next) => {
