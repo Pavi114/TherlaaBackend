@@ -12,16 +12,16 @@ const transactionSchema = new mongoose.Schema({
       default: false
     },
     amount: Number,
-    ref_ID: String,
-    is_receiver_vendor: {
+    refID: String,
+    isReceiverVendor: {
       type: Boolean,
       default: false
     },
-    is_denied: {
+    isDenied: {
       type: Boolean,
       default: false
     },
-    is_cancelled: {
+    isCancelled: {
       type: Boolean,
       default: false
     }
