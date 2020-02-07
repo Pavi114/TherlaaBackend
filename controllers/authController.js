@@ -74,15 +74,18 @@ exports.studentLogin = (req, res) => {
   })
 }
 
-exports.vendorRegister = (req, res, next) => {
-    var username = req.body.username
-    var password = req.body.password
+exports.vendorRegister = async (req, res, next) => {
+    var { username, password, upiId } = req.body
 
+    await vendor = Vendor.findOne({ $or: [{username: username}, {upiId: upiId}] });
+    if (vendor) {
+      return res.status(401).send({'message': 'Username or UPI Id already exists'});
+    }
     var hashedPassword = hash.generate(password)
     const response = {
       message: 'Register Successful'
     }
-    Vendor.create({username: username, password: hashedPassword}, function(err, newVendor){
+    Vendor.create({ username: username, password: hashedPassword, upiId: upiId }, function(err, newVendor){
       if (err) {
         console.log(err)
         return res.status(500).send({'message': 'Unknown Error'})
