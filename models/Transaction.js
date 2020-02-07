@@ -10,7 +10,12 @@ const transactionSchema = new mongoose.Schema({
       type: Boolean,
       default: false
     },
-    ref_ID: String
+    amount: Number,
+    ref_ID: String,
+    is_receiver_vendor: {
+      type: Boolean,
+      default: false
+    }
 });
 
 module.exports = mongoose.model('Transaction', transactionSchema)
