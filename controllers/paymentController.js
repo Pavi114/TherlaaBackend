@@ -1,6 +1,6 @@
 const Vendor = require('../models/Vendor.js')
 const Student = require('../models/Student.js')
-const Transaction = require('../models/transaction.js')
+const Transaction = require('../models/Transaction.js')
 
 exports.createPayment = (req, res) => {
     var userId = req.userId
@@ -23,7 +23,7 @@ exports.createPayment = (req, res) => {
                 return res.send({'transactionId': newTransaction._id})
             })
         })
-    } 
+    }
     else if (loginType == "Student") {
         Student.findOne({rollNumber: userId}, function(err, student){
             if(err){
