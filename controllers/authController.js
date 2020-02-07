@@ -77,7 +77,7 @@ exports.studentLogin = (req, res) => {
 exports.vendorRegister = async (req, res, next) => {
     var { username, password, upiId } = req.body
 
-    await vendor = Vendor.findOne({ $or: [{username: username}, {upiId: upiId}] });
+    let vendor = await Vendor.findOne({ $or: [{username: username}, {upiId: upiId}] });
     if (vendor) {
       return res.status(401).send({'message': 'Username or UPI Id already exists'});
     }
@@ -116,7 +116,7 @@ exports.vendorLogin = (req, res, next) => {
           const response = {
             message: 'Invalid Credentials'
           }
-          res.send(response)
+          res.status(401).send(response)
         }
     })
 }
