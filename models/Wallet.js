@@ -7,7 +7,6 @@ const walletSchema = new mongoose.Schema({
       type: Boolean,
       default: false
     },
-    lastLogin: Date,
     walletPin: String
 })
 
