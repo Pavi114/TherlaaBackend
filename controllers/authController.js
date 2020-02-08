@@ -40,6 +40,7 @@ exports.studentLogin = (req, res) => {
     connection.end()
 
     // Find User ID
+    var currDate = Date.now()
     Student.findOne({ rollNumber: req.body.rollNumber }, function (err, student) {
       if (err) {
         console.log(err);
@@ -47,7 +48,7 @@ exports.studentLogin = (req, res) => {
 
       // If student doesn't exist create a new entry.
       if (!student) {
-        Student.create({ rollNumber: req.body.rollNumber }, function (err, newstudent) {
+        Student.create({ rollNumber: req.body.rollNumber, lastLogin: currDate}, function (err, newstudent) {
           if (err) {
             console.log(err);
           }
@@ -56,14 +57,14 @@ exports.studentLogin = (req, res) => {
               console.log(err)
               res.status(403).send({message: 'Idk'})
             }
-            response.APIToken = jwt.sign({ rollNumber: req.body.rollNumber, loginType: 'Student', time: Date.now() }, config.apiSecret)
+            response.APIToken = jwt.sign({ rollNumber: req.body.rollNumber, loginType: 'Student', time: currDate}, config.apiSecret)
 
             res.status(200)
             res.send(response)
           })
         })
       } else {
-        response.APIToken = jwt.sign({ rollNumber: req.body.rollNumber, loginType: 'Student', time: Date.now() }, config.apiSecret)
+        response.APIToken = jwt.sign({ rollNumber: req.body.rollNumber, loginType: 'Student', time: currDate}, config.apiSecret)
 
         res.status(200)
         res.send(response)
@@ -84,6 +85,7 @@ exports.studentLogin = (req, res) => {
 exports.vendorRegister = async (req, res, next) => {
     var { username, password, upiId } = req.body
 
+    var currDate = Date.now()
     let vendor = await Vendor.findOne({ $or: [{username: username}, {upiId: upiId}] });
     if (vendor) {
       return res.status(401).send({'message': 'Username or UPI Id already exists'});
@@ -92,7 +94,7 @@ exports.vendorRegister = async (req, res, next) => {
     const response = {
       message: 'Register Successful'
     }
-    Vendor.create({ username: username, password: hashedPassword, upiId: upiId }, function(err, newVendor){
+    Vendor.create({ username: username, password: hashedPassword, upiId: upiId, lastLogin: currDate }, function(err, newVendor){
       if (err) {
         console.log(err)
         return res.status(500).send({'message': 'Unknown Error'})
@@ -102,7 +104,7 @@ exports.vendorRegister = async (req, res, next) => {
           console.log(err)
           res.status(403).send({message: 'Idk'})
         }
-        response.APIToken = jwt.sign({ rollNumber: username, loginType: 'Vendor', time: Date.now() }, config.apiSecret)
+        response.APIToken = jwt.sign({ rollNumber: username, loginType: 'Vendor', time: currDate }, config.apiSecret)
 
         res.status(200)
         res.send(response)
@@ -117,12 +119,15 @@ exports.vendorLogin = (req, res, next) => {
       message: 'Login Successful'
     }
     Vendor.findOne({username: username}, function(err, vendor) {
+        currDate = Date.now()
         if(err) {
           console.log(err)
           res.status(404).send({message: "Unknown error"})
         }
         if (hash.verify(password, vendor.password)) {
-          response.APIToken = jwt.sign({ username: req.body.username, loginType: 'Vendor', time: Date.now() }, config.apiSecret)
+          vendor.lastLogin = currDate
+          vendor.save()
+          response.APIToken = jwt.sign({ username: req.body.username, loginType: 'Vendor', time: currDate}, config.apiSecret)
           res.status(200)
           res.send(response)
         }
@@ -156,24 +161,32 @@ exports.validateJWT = (req, res, next) => {
           if (!student) {
             res.status(401)
             res.send({ message: 'Invalid API Token' })
-          } else {
-            req.userId = decoded.rollNumber
-            req.loginType = 'Student'
-            next()
           }
-        })
+          else if(decoded.time != student.lastLogin){
+                  res.status(401)
+                  res.send({message: 'Invalid API Token'})
+                }
+                else {
+                  req.userId = decoded.rollNumber
+                  req.loginType = 'Student'
+                  next()
+                }
+           })
       } else if (decoded.loginType === 'Vendor') {
-        Vendor.findOne({ username: decoded.username }, function (err, vendor) {
+         Vendor.findOne({ username: decoded.username }, function (err, vendor) {
           if (err) {
             console.log(err);
           }
           if (!vendor) {
-            res.status(401)
-            res.send({ message: 'Invalid API Token' })
+              res.status(401)
+              res.send({ message: 'Invalid API Token' })
+          } else if(decoded.time != student.vendorLogin) {
+              res.status(401)
+              res.send({message: 'Invalid API Token'})
           } else {
-            req.userId = decoded.username
-            req.loginType = 'Vendor'
-            next()
+              req.userId = decoded.username
+              req.loginType = 'Vendor'
+              next()
           }
         })
       }

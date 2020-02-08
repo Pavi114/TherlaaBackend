@@ -15,8 +15,8 @@ const config = require('./config')
 var app = express();
 
 // Socket.io
-var io           = socket_io();
-app.io           = io;
+var io = socket_io();
+app.io = io;
 
 mongoose.connect(config.dbURI)
 

@@ -6,7 +6,8 @@ const walletSchema = new mongoose.Schema({
     isVendor: {
       type: Boolean,
       default: false
-    }
+    },
+    lastLogin: Date
 })
 
 module.exports = mongoose.model('Wallet', walletSchema)
