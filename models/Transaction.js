@@ -16,6 +16,14 @@ const transactionSchema = new mongoose.Schema({
     is_receiver_vendor: {
       type: Boolean,
       default: false
+    },
+    is_denied: {
+      type: Boolean,
+      default: false
+    },
+    is_cancelled: {
+      type: Boolean,
+      default: false
     }
 });
 
