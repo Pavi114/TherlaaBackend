@@ -1,6 +1,7 @@
 const Wallet = require('../models/Wallet.js')
 const WalletPayment = require('../models/WalletPayment.js')
 const Transaction = require('../models/Transaction.js')
+const keyPairHelpers = require('../helpers/keyPairHelpers.js')
 const hash = require('password-hash')
 
 exports.addMoneyToWallet = (req, res, next) => {
@@ -43,24 +44,48 @@ exports.setWalletPin = (req, res, next) => {
   })
 }
 
-exports.newWalletPayment = (req, res, next) => {
-  var sender = req.userId
-  var transactionId = req.body.transactionId
-  var receiver = req.body.receiverId
-  var amount = req.body.amount
-  WalletPayment.create({sender: sender, receiver: receiver, amount: amount, transactionId: transactionId, dateCreated: Date.now()}, function(err, newPayment){
+exports.newWalletPayment = async (req, res, next) => {
+  var userId = req.userId
+  var data = req.body.data
+  try{
+    let keyPair = await KeyPair.findOne({userId: userId})
+  } catch(err){
+    console.log(err)
+    return res.status(500).send({'message': 'Unknown Error'})
+  }
+  var body = JSON.parse(keyPairHelpers.decrypt(data, keyPair.private_key, keyPair.peer_public_key))
+  var transactionId = body.transactionId
+  try{
+    let transaction = await Transaction.findById(transactionId)
+  } catch(err){
+    console.log(err)
+    return res.status(500).send({'message': 'Unknown Error'})
+  }
+  if(transaction.sender != userId){
+    console.log(err)
+    return res.status(500).send({'message': 'Unknown Error'})
+  }
+  WalletPayment.create({sender: transaction.sender, receiver: transaction.receiver, amount: transaction.amount, transactionId: transactionId, dateCreated: Date.now()}, function(err, newPayment){
     if(err){
       console.log(err)
     }
-    return res.status(200).send({'message': 'Success', 'paymentId': newPayment._id})
+    var response = {'message': 'Success', 'paymentId': newPayment._id}
+    var returnData = keyPairHelpers.encrypt(JSON.stringify(response), keyPair.private_key, keyPair.peer_public_key)
+    return res.status(200).send({data: returnData})
   })
 }
 
 exports.finishWalletPayment = async (req, res, next) => {
-  var password = req.body.password
-  var walletPaymentId = req.body.walletPaymentId
+  // var passcode = req.body.passcode
+  // var walletPaymentId = req.body.PaymentId
   var userId = req.userId
-
+  try{
+    let keyPair = await KeyPair.findOne({userId: userId})
+  } catch(err){
+    console.log(err)
+    return res.status(500).send({'message': 'Unknown Error'})
+  }
+  var body = JSON.parse(keyPairHelpers.decrypt(data, keyPair.private_key, keyPair.peer_public_key))
   Wallet.findOne({userId: userId}, function(err, wallet){
     if(err || !wallet){
       console.log(err)
@@ -68,9 +93,9 @@ exports.finishWalletPayment = async (req, res, next) => {
     }
     else{
       var walletPin = wallet.walletPin
-      if(hash.verify(password, walletPin)){
+      if(hash.verify(body.passcode, walletPin)){
         try {
-          let walletPayment = await WalletPayment.findById(walletPaymentId)
+          let walletPayment = await WalletPayment.findById(body.paymentId)
         } catch (error) {
           console.log(error)
           return res.status(500).send({message: 'Invalid request'})
