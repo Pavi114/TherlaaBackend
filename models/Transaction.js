@@ -24,6 +24,10 @@ const transactionSchema = new mongoose.Schema({
     isCancelled: {
       type: Boolean,
       default: false
+    },
+    isUpi: {
+      type: Boolean,
+      default: false
     }
 });
 

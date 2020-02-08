@@ -86,6 +86,77 @@ exports.registerPayment = (req, res, next) => {
     }
 }
 
+exports.getUpiPaymentDetails = (req, res, next) => {
+  var userId = req.userId
+  var loginType = req.loginType
+  var transactionId = req.body.transactionId
+  Transaction.findById(transactionId, function(err, transaction) {
+    if (err || !transaction || transaction.sender != userId) {
+      console.log(err)
+      res.send(500).send({message: "Bad request"})
+    }
+    else {
+      if(loginType == 'Vendor'){
+          Vendor.findOne({username: transaction.sender}, function(err, vendor){
+              if(err){
+                console.log(err)
+                res.status(500).send({message: 'Unknown error'})
+              }
+              else {
+                res.send({upiId: vendor.upiId, amount: transaction.amount})
+              }
+          })
+      }
+      else if(loginType == 'Student'){
+        Student.findOne({rollNumber: transaction.sender}, function(err, student){
+            if(err){
+              console.log(err)
+              res.status(500).send({message: 'Unknown error'})
+            }
+            else {
+              res.send({upiId: student.upiId, amount: transaction.amount})
+            }
+        })
+      }
+      else {
+        res.status(500).send({message: 'Bad Request'})
+      }
+    }
+  })
+}
+
+exports.payThruWallet = (req, res, next) => {
+  var userId = req.userId
+  var loginType = req.loginType
+  var transactionId = req.body.transactionId
+  Transaction.findById(transactionId, function (err, transaction){
+      if(userId != transaction.sender){
+        res.status(500).send('Bad Request')
+      }
+      else {
+        Wallet.findOne({userId: userId}, function(er, wallet) {
+          if(err){
+            console.log(err)
+            res.status(400).send('Unknown error')
+          }
+          else {
+            Wallet.findOne({userId: transaction.receiver}, function(e, receiverWallet){
+              if(err) {
+                console.log(err)
+                res.status(400).send('Unknown Error')
+              }
+              else {
+                  wallet.amount -= transaction.amount
+                  receiverWallet.amount += transaction.amount
+                  res.send({message: 'Success'})
+              }
+            })
+          }
+        })
+      }
+  })
+}
+
 exports.cancelPayment = (req, res, next) => {
     var userId = req.userId
     var transactionId = req.body.transactionId
