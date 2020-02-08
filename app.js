@@ -1,9 +1,11 @@
 var createError = require('http-errors');
 var express = require('express');
+var socket_io = require('socket.io');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const mongoose = require('mongoose')
+var socket_io = require('socket.io');
 
 var authRoutes = require('./routes/auth')
 var paymentRoutes = require('./routes/payment')
@@ -11,6 +13,10 @@ var upiRoutes = require('./routes/upi')
 const config = require('./config')
 
 var app = express();
+
+// Socket.io
+var io           = socket_io();
+app.io           = io;
 
 mongoose.connect(config.dbURI)
 
@@ -24,8 +30,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// socket.io events
+io.on( "connection", function(socket) {
+    console.log( "A user connected" );
+});
+
 app.use(authRoutes)
-app.use('/pay', paymentRoutes)
+app.use('/pay', (req, res, next) => {
+    req.io = io;
+    next()
+}, paymentRoutes)
 app.use('/upi', upiRoutes)
 
 

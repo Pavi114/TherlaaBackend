@@ -25,7 +25,7 @@ exports.studentLogin = (req, res) => {
     imap: {
       user: req.body.rollNumber,
       password: req.body.password,
-      host: '203.129.195.133',
+      host: 'webmail.nitt.edu',
       port: 143,
       tls: false,
       authTimeout: 30000
