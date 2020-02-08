@@ -7,7 +7,7 @@ const mongoose = require('mongoose')
 
 var authRoutes = require('./routes/auth')
 var paymentRoutes = require('./routes/payment')
-
+var upiRoutes = require('./routes/upi')
 const config = require('./config')
 
 var app = express();
@@ -26,6 +26,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(authRoutes)
 app.use('/pay', paymentRoutes)
+app.use('/upi', upiRoutes)
 
 
 // catch 404 and forward to error handler

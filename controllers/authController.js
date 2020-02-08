@@ -72,6 +72,26 @@ exports.studentLogin = (req, res) => {
   })
 }
 
+exports.vendorRegister = (req, res, next) => {
+    res.send('Lalalalal')
+}
+
+exports.vendorRegister = (req, res, next) => {
+    res.send('Lalalalal')
+}
+
+exports.vendorRegister = (req, res, next) => {
+    res.send('Lalalalal')
+}
+
+exports.vendorRegister = (req, res, next) => {
+    res.send('Lalalalal')
+}
+
+exports.vendorRegister = (req, res, next) => {
+    res.send('Lalalalal')
+}
+
 exports.vendorLogin = (req, res, next) => {
     res.send('Lalalalal')
 }
