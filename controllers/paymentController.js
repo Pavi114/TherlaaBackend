@@ -1,6 +1,7 @@
 const Vendor = require('../models/Vendor.js')
 const Student = require('../models/Student.js')
 const Transaction = require('../models/Transaction.js')
+const KeyPair = require('../models/KeyPair.js')
 const socketController = require('./socketController')
 const keyPairHelpers = require('../helpers/keyPairHelpers')
 
@@ -50,14 +51,22 @@ exports.createPayment = (req, res) => {
     }
 }
 
-exports.registerPayment = (req, res, next) => {
+exports.registerPayment = async (req, res, next) => {
     var userId = req.userId
     var loginType = req.loginType
-    var transactionId = req.body.transactionId
+    var data = req.body.data
     if(loginType != "Student"){
         return res.status(401).send({'message': 'Invalid Action'})
     }
     else{
+        try{
+            let keyPair = await KeyPair.findOne({userId: userId})
+        } catch(err){
+            console.log(err)
+            return res.status(500).send({'message': 'Unknown Error'})
+        }
+        var body = JSON.parse(keyPairHelpers.decrypt(data, keyPair.private_key, keyPair.peer_public_key))
+        var transactionId = body.transactionId
         Transaction.findById(transactionId, async function(err, transaction){
             if(err || !transaction){
                 console.log(err)
@@ -81,7 +90,9 @@ exports.registerPayment = (req, res, next) => {
                 if(err){
                     console.log(err)
                 }
-                socketController.sendSocketDataToUser(req.io, transaction.receiver, {type: TRANSACTION_REGISTERED, transactionId: transaction._id})
+                var response = {type: TRANSACTION_REGISTERED, transactionId: transaction._id}
+                var returnData = keyPairHelpers.encrypt(JSON.stringify(response), keyPair.private_key, keyPair.peer_public_key)
+                socketController.sendSocketDataToUser(req.io, transaction.receiver, {data: returnData})
                 return res.status(200).send({'message': 'Success', pendingRequests: pendingRequests})
             })
         })
@@ -91,56 +102,58 @@ exports.registerPayment = (req, res, next) => {
 exports.getUpiPaymentDetails = async (req, res, next) => {
   var userId = req.userId
   var loginType = req.loginType
-  var transactionId = req.body.transactionId
+  var data = req.body.data
+  try{
+    let keyPair = await KeyPair.findOne({userId: userId})
+  } catch(err){
+    console.log(err)
+    return res.status(500).send({'message': 'Unknown Error'})
+  }
+  var body = JSON.parse(keyPairHelpers.decrypt(data, keyPair.private_key, keyPair.peer_public_key))
+  var transactionId = body.transactionId
   var transaction = await Transaction.findOne({_id: transactionId, sender: userId})
   if (!transaction) {
     res.status(500).send("Server error");
   }
-
   if (transaction.isReceiverVendor) {
     var vendor = await Vendor.findOne({ username: transaction.receiver})
-    return res.send({ receiverId: vendor.username, upiId: vendor.upiId, amount: transaction.amount })
+    var response = { receiverId: vendor.username, upiId: vendor.upiId, amount: transaction.amount }
+    var returnData = keyPairHelpers.encrypt(JSON.stringify(response), keyPair.private_key, keyPair.peer_public_key)
+    return res.send({data: returnData})
   } else {
     var student = await Student.findOne({ rollNumber: transaction.receiver})
-    return res.send({ receiverId: student.rollNumber, upiId: student.upiId, amount: transaction.amount })
+    var response = { receiverId: student.rollNumber, upiId: student.upiId, amount: transaction.amount }
+    var returnData = keyPairHelpers.encrypt(JSON.stringify(response), keyPair.private_key, keyPair.peer_public_key)
+    return res.send({data: returnData})
   }
 }
 
-exports.payThroughWallet = (req, res, next) => {
-  var userId = req.userId
-  var loginType = req.loginType
-  var transactionId = req.body.transactionId
-  Transaction.findById(transactionId, function (err, transaction){
-      if(userId != transaction.sender){
-        res.status(500).send('Bad Request')
-      }
-      else {
-        Wallet.findOne({userId: userId}, function(er, wallet) {
-          if(err){
+exports.confirmPayment = async (req, res, next) => {
+    var userId = req.userId
+    var data = req.body.data
+    try{
+        let keyPair = await KeyPair.findOne({userId: userId})
+    } catch(err){
+        console.log(err)
+        return res.status(500).send({'message': 'Unknown Error'})
+    }
+    var body = JSON.parse(keyPairHelpers.decrypt(data, keyPair.private_key, keyPair.peer_public_key))
+    var transactionId = body.transactionId
+
+    Transaction.findById(transactionId, function(err, transaction){
+        if(err){
             console.log(err)
-            res.status(400).send('Unknown error')
-          }
-          else {
-            Wallet.findOne({userId: transaction.receiver}, function(e, receiverWallet){
-              if(err) {
-                console.log(err)
-                res.status(400).send('Unknown Error')
-              }
-              else {
-                  if(wallet.amount < transaction.amount){
-                    res.status(403)
-                    res.send({message: 'Insufficient money in Wallet'})
-                  }
-                  wallet.amount -= transaction.amount
-                  receiverWallet.amount += transaction.amount
-                  socketController.sendSocketDataToUser(req.io, transaction.receiver, {type: TRANSACTION_COMPLETED, transactionId: transaction._id})
-                  res.send({message: 'Success'})
-              }
-            })
-          }
-        })
-      }
-  })
+            return res.status(500).send({'message': 'Unknown Error'})
+        }
+        else{
+            transaction.refID = body.refID
+            transaction.isCompleted = true
+            transaction.isActivated = false
+            transaction.dateCompleted = Date.now()
+            transaction.save()
+            return res.status(200).send({message: 'Success'})
+        }
+    })
 }
 
 exports.cancelPayment = (req, res, next) => {
