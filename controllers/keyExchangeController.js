@@ -6,7 +6,7 @@ exports.performKeyExchange = async (req, res) => {
 
   let keyPair = keyPairHelpers.generateKeypair();
 
-  let keyPairInstance = await KeyPair.create({peer_public_key: peer_public_key, private_key: keyPair.private(), public_key: keyPair.public()})
+  let keyPairInstance = await KeyPair.create({peer_public_key: peer_public_key, private_key: keyPair.private(), userId: req.userId})
 
   return res.send({ message: "Success", public_key: keyPair.public() })
 }
