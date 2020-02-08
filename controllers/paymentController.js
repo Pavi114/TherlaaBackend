@@ -22,7 +22,7 @@ exports.createPayment = (req, res) => {
             if(vendor.upiId == ""){
                 return res.status(500).send({'message': 'UPI not found'})
             }
-            Transaction.create({receiver: userId, amount: amount, isReceiverVendor: true}, function(err, newTransaction){
+            Transaction.create({receiver: userId, amount: amount, isReceiverVendor: true, dateCreated: Date.now()}, function(err, newTransaction){
                 if(err){
                     console.log(err)
                 }
@@ -147,6 +147,10 @@ exports.payThroughWallet = (req, res, next) => {
                 res.status(400).send('Unknown Error')
               }
               else {
+                  if(wallet.amount < transaction.amount){
+                    res.status(403)
+                    res.send({message: 'Insufficient money in Wallet'})
+                  }
                   wallet.amount -= transaction.amount
                   receiverWallet.amount += transaction.amount
                   socketController.sendSocketDataToUser(req.io, transaction.receiver, {type: TRANSACTION_COMPLETED, transactionId: transaction._id})
@@ -260,7 +264,9 @@ exports.completedTransactions = (req, res) => {
                 transactionId: transaction._id,
                 sender: transaction.sender,
                 receiver: transaction.receiver,
-                amount: transaction.amount
+                amount: transaction.amount,
+                modeOfPayment: transaction.isUpi ? 'UPI' : 'Wallet',
+                dateOfPayment: transaction.dateCompleted
             })
         }
         return res.send({ message: 'Success', completedPayments: completedPayments })
