@@ -1,9 +1,11 @@
 const hash = require('password-hash')
+const Student = require('../models/Student.js')
+const Vendor = require('../models/Vendor.js')
 
-exports.setLoginPin = (req, res) => {
-    pin = req.body.pin
+exports.setLoginPin = async (req, res) => {
+    passcode = req.body.passcode
     userId = req.userId
-    hashed = hash.generate(pin)
+    hashed = await hash.generate(passcode)
     if(req.loginType == 'Student') {
       Student.findOne({rollNumber: userId}, function(err, student) {
           if(err || !student) {
@@ -17,8 +19,7 @@ exports.setLoginPin = (req, res) => {
             res.send({message: 'Success'})
           }
       })
-    }
-    else if(req.loginType == 'Vendor') {
+    } else if(req.loginType == 'Vendor') {
         Vendor.findOne({username: userId}, function(err, vendor) {
             if(err || !vendor) {
               console.log(err)
@@ -34,9 +35,10 @@ exports.setLoginPin = (req, res) => {
     }
 }
 
-exports.verifyLoginPin = (req, res) => {
+exports.verifyLoginPin = (req, res, next) => {
   userId = req.userId
-  pin = req.loginPin
+  loginType = req.loginType
+  pin = req.body.passcode
   if(loginType == 'Student') {
     Student.findOne({rollNumber: userId}, function(err, student){
       if(err || !student){

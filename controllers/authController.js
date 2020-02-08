@@ -48,9 +48,10 @@ exports.studentLogin = (req, res) => {
 
       // If student doesn't exist create a new entry.
       if (!student) {
-        Student.create({ rollNumber: req.body.rollNumber, lastLogin: currDate}, function (err, newstudent) {
-          if (err) {
+        Student.create({ rollNumber: req.body.rollNumber, lastLogin: currDate, loginPin: null}, function (err, newstudent) {
+          if (err || !newstudent) {
             console.log(err);
+            return res.send(500);
           }
           Wallet.create({userId: req.body.rollNumber, amount: 0, isVendor: false}, function(err, newWallet){
             if(err) {
@@ -58,6 +59,7 @@ exports.studentLogin = (req, res) => {
               res.status(403).send({message: 'Idk'})
             }
             response.APIToken = jwt.sign({ rollNumber: req.body.rollNumber, loginType: 'Student', time: currDate}, config.apiSecret)
+            response.passcodeSet = newstudent.loginPin != null
 
             res.status(200)
             res.send(response)
@@ -65,6 +67,7 @@ exports.studentLogin = (req, res) => {
         })
       } else {
         response.APIToken = jwt.sign({ rollNumber: req.body.rollNumber, loginType: 'Student', time: currDate}, config.apiSecret)
+        response.passcodeSet = student.loginPin != null
         student.lastLogin = currDate;
         student.save()
 

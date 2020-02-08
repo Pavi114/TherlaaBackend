@@ -10,6 +10,7 @@ router.post('/vendorLogin', authController.vendorLogin)
 router.use('/pay', authController.validateJWT)
 router.use('/upi', authController.validateJWT)
 
+router.post('/setPasscode', authController.validateJWT, loginPinController.setLoginPin)
 router.post('/keyExchange', authController.validateJWT, loginPinController.verifyLoginPin, keyExchangeController.performKeyExchange)
 
 module.exports = router
