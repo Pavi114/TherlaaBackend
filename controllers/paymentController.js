@@ -75,15 +75,15 @@ exports.registerPayment = async (req, res, next) => {
             if(transaction.receiver == userId){
                 return res.status(403).send({'message': 'Invalid Action'})
             }
-            var pendingRequests = []
-            let transactions = await Transaction.find({receiver: transaction.receiver, sender: userId, isActivated: true});
-            for (let pending of transactions) {
-                pendingRequests.push({
-                    transactionId: pending._id,
-                    sender: pending.sender,
-                    amount: pending.amount
-                })
-            }
+            // var pendingRequests = []
+            // let transactions = await Transaction.find({receiver: transaction.receiver, sender: userId, isActivated: true});
+            // for (let pending of transactions) {
+            //     pendingRequests.push({
+            //         transactionId: pending._id,
+            //         sender: pending.sender,
+            //         amount: pending.amount
+            //     })
+            // }
             transaction.sender = userId
             transaction.isActivated = true
             transaction.save(function(err){
@@ -92,8 +92,8 @@ exports.registerPayment = async (req, res, next) => {
                 }
                 var response = {type: TRANSACTION_REGISTERED, transactionId: transaction._id}
                 var returnData = keyPairHelpers.encrypt(JSON.stringify(response), keyPair.private_key, keyPair.peer_public_key)
-                socketController.sendSocketDataToUser(req.io, transaction.receiver, {data: returnData})
-                return res.status(200).send({'message': 'Success', pendingRequests: pendingRequests})
+                socketController.sendSocketDataToUser(req.io, transaction.receiver, {type: TRANSACTION_REGISTERED, transactionId: transaction._id})
+                return res.status(200).send({'message': 'Success'})
             })
         })
     }
@@ -211,15 +211,7 @@ exports.pendingRequests = (req, res) => {
             console.log(err);
             return res.status(500).send({'message': 'Unknown Error'})
         }
-        const pendingRequests = []
-        for (let transaction of transactions) {
-            pendingRequests.push({
-                transactionId: transaction._id,
-                receiver: transaction.receiver,
-                amount: transaction.amount
-            })
-        }
-        return res.send({ message: 'Success', pendingRequests: pendingRequests })
+        return res.send({ message: 'Success', pendingRequests: transactions })
     })
 }
 
@@ -231,15 +223,7 @@ exports.pendingPayments = (req, res) => {
             console.log(err);
             return res.status(500).send({'message': 'Unknown Error'})
         }
-        const pendingPayments = []
-        for (let transaction of transactions) {
-            pendingPayments.push({
-                transactionId: transaction._id,
-                sender: transaction.sender,
-                amount: transaction.amount
-            })
-        }
-        return res.send({ message: 'Success', pendingPayments: pendingPayments })
+        return res.send({ message: 'Success', pendingPayments: transactions })
     })
 }
 
@@ -251,17 +235,6 @@ exports.completedTransactions = (req, res) => {
             console.log(err);
             return res.status(500).send({'message': 'Unknown Error'})
         }
-        const completedPayments = []
-        for (let transaction of transactions) {
-            completedPayments.push({
-                transactionId: transaction._id,
-                sender: transaction.sender,
-                receiver: transaction.receiver,
-                amount: transaction.amount,
-                modeOfPayment: transaction.isUpi ? 'UPI' : 'Wallet',
-                dateOfPayment: transaction.dateCompleted
-            })
-        }
-        return res.send({ message: 'Success', completedPayments: completedPayments })
+        return res.send({ message: 'Success', completedTransactions: transactions })
     })
 }

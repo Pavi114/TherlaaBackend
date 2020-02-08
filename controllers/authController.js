@@ -65,6 +65,8 @@ exports.studentLogin = (req, res) => {
         })
       } else {
         response.APIToken = jwt.sign({ rollNumber: req.body.rollNumber, loginType: 'Student', time: currDate}, config.apiSecret)
+        student.lastLogin = currDate;
+        student.save()
 
         res.status(200)
         res.send(response)
@@ -162,7 +164,7 @@ exports.validateJWT = (req, res, next) => {
             res.status(401)
             res.send({ message: 'Invalid API Token' })
           }
-          else if(decoded.time != student.lastLogin){
+          else if(Number(decoded.time) != Number(student.lastLogin)){
                   res.status(401)
                   res.send({message: 'Invalid API Token'})
                 }
@@ -180,7 +182,7 @@ exports.validateJWT = (req, res, next) => {
           if (!vendor) {
               res.status(401)
               res.send({ message: 'Invalid API Token' })
-          } else if(decoded.time != student.vendorLogin) {
+          } else if(Number(decoded.time) != Number(vendor.lastLogin)) {
               res.status(401)
               res.send({message: 'Invalid API Token'})
           } else {
