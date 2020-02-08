@@ -87,43 +87,22 @@ exports.registerPayment = (req, res, next) => {
     }
 }
 
-exports.getUpiPaymentDetails = (req, res, next) => {
+exports.getUpiPaymentDetails = async (req, res, next) => {
   var userId = req.userId
   var loginType = req.loginType
   var transactionId = req.body.transactionId
-  Transaction.findById(transactionId, function(err, transaction) {
-    if (err || !transaction || transaction.sender != userId) {
-      console.log(err)
-      res.send(500).send({message: "Bad request"})
-    }
-    else {
-      if(loginType == 'Vendor'){
-          Vendor.findOne({username: transaction.sender}, function(err, vendor){
-              if(err){
-                console.log(err)
-                res.status(500).send({message: 'Unknown error'})
-              }
-              else {
-                res.send({upiId: vendor.upiId, amount: transaction.amount, receiverId: userId})
-              }
-          })
-      }
-      else if(loginType == 'Student'){
-        Student.findOne({rollNumber: transaction.sender}, function(err, student){
-            if(err){
-              console.log(err)
-              res.status(500).send({message: 'Unknown error'})
-            }
-            else {
-              res.send({upiId: student.upiId, amount: transaction.amount, receiverId: userId})
-            }
-        })
-      }
-      else {
-        res.status(500).send({message: 'Bad Request'})
-      }
-    }
-  })
+  var transaction = await Transaction.findOne({_id: transactionId, sender: userId})
+  if (!transaction) {
+    res.status(500).send("Server error");
+  }
+
+  if (transaction.isReceiverVendor) {
+    var vendor = await Vendor.findOne({ username: transaction.receiver})
+    return res.send({ receiverId: vendor.username, upiId: vendor.upiId, amount: transaction.amount })
+  } else {
+    var student = await Student.findOne({ rollNumber: transaction.receiver})
+    return res.send({ receiverId: student.rollNumber, upiId: student.upiId, amount: transaction.amount })
+  }
 }
 
 exports.payThroughWallet = (req, res, next) => {
