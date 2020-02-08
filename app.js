@@ -6,7 +6,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const mongoose = require('mongoose')
 var socket_io = require('socket.io');
-
+var socketRoute = require('./routes/socket')
 var authRoutes = require('./routes/auth')
 var paymentRoutes = require('./routes/payment')
 var upiRoutes = require('./routes/upi')
@@ -30,16 +30,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// socket.io events
-io.on( "connection", function(socket) {
-    console.log( "A user connected" );
-});
-
+app.use(socketRoute(io))
 app.use(authRoutes)
-app.use('/pay', (req, res, next) => {
-    req.io = io;
-    next()
-}, paymentRoutes)
+app.use('/pay', paymentRoutes)
 app.use('/upi', upiRoutes)
 
 

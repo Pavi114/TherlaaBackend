@@ -9,6 +9,6 @@ router.post('/denyPayment', paymentController.denyPayment)
 router.post('/pendingRequests', paymentController.pendingRequests) // To get pending requests on Client
 router.post('/pendingPayments', paymentController.pendingPayments) // To get pening payments on Server
 router.post('/completedTransactions', paymentController.completedTransactions)
-router.post('/payThruWallet', paymentController.payThruWallet)
+router.post('/payThroughWallet', paymentController.payThroughWallet)
 
 module.exports = router
