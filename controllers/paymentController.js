@@ -128,7 +128,7 @@ exports.getUpiPaymentDetails = async (req, res, next) => {
   }
 }
 
-exports.confirmPayment = (req, res, next) => {
+exports.confirmPayment = async (req, res, next) => {
     var userId = req.userId
     var data = req.body.data
     try{

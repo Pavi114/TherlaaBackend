@@ -86,7 +86,7 @@ exports.finishWalletPayment = async (req, res, next) => {
     return res.status(500).send({'message': 'Unknown Error'})
   }
   var body = JSON.parse(keyPairHelpers.decrypt(data, keyPair.private_key, keyPair.peer_public_key))
-  Wallet.findOne({userId: userId}, function(err, wallet){
+  Wallet.findOne({userId: userId}, async function(err, wallet){
     if(err || !wallet){
       console.log(err)
       res.status(500).send({message: 'Invalid request'})
@@ -128,7 +128,7 @@ exports.finishWalletPayment = async (req, res, next) => {
         completed.isCompleted = true
         completed.isActivated = false
         completed.save()
-        return res.status(200).send({message: 'Success'})          
+        return res.status(200).send({message: 'Success'})
       }
       else{
         return res.status(402).send({message: 'Invalid request'})
