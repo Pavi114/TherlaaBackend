@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken')
 const hash = require('password-hash')
 const Student = require('../models/Student.js')
 const Vendor = require('../models/Vendor.js')
+const Wallet = require('../models/Wallet.js')
 const { check, validationResult } = require('express-validator')
 const config = require('../config')
 
@@ -50,10 +51,16 @@ exports.studentLogin = (req, res) => {
           if (err) {
             console.log(err);
           }
-          response.APIToken = jwt.sign({ rollNumber: req.body.rollNumber, loginType: 'Student', time: Date.now() }, config.apiSecret)
+          Wallet.create({userId: req.body.rollNumber, amount: 0, isVendor: false}, function(err, newWallet){
+            if(err) {
+              console.log(err)
+              res.status(403).send({message: 'Idk'})
+            }
+            response.APIToken = jwt.sign({ rollNumber: req.body.rollNumber, loginType: 'Student', time: Date.now() }, config.apiSecret)
 
-          res.status(200)
-          res.send(response)
+            res.status(200)
+            res.send(response)
+          })
         })
       } else {
         response.APIToken = jwt.sign({ rollNumber: req.body.rollNumber, loginType: 'Student', time: Date.now() }, config.apiSecret)
@@ -90,9 +97,16 @@ exports.vendorRegister = async (req, res, next) => {
         console.log(err)
         return res.status(500).send({'message': 'Unknown Error'})
       }
-      response.APIToken = jwt.sign({ username: req.body.username, loginType: 'Vendor', time: Date.now() }, config.apiSecret)
-      res.status(200)
-      res.send(response)
+      Wallet.create({userId: username, amount: 0, isVendor: true}, function(err, newWallet){
+        if(err) {
+          console.log(err)
+          res.status(403).send({message: 'Idk'})
+        }
+        response.APIToken = jwt.sign({ rollNumber: username, loginType: 'Vendor', time: Date.now() }, config.apiSecret)
+
+        res.status(200)
+        res.send(response)
+      })
     })
 }
 
