@@ -59,13 +59,28 @@ exports.registerPayment = (req, res, next) => {
             if(transaction.receiver == userId){
                 return res.status(403).send({'message': 'Invalid Action'})
             }
+            var pendingRequests = []
+            Transaction.find({receiver: transaction.receiver, sender: userId, isActivated: true}, function(err,transactions){
+                if(err){
+                    console.log(err)
+                }
+                if(transactions){
+                    for (let pending of transactions) {
+                        pendingRequests.push({
+                            transactionId: pending._id,
+                            sender: pending.sender,
+                            amount: pending.amount
+                        })
+                    }
+                }
+            })
             transaction.sender = userId
             transaction.isActivated = true
             transaction.save(function(err){
                 if(err){
                     console.log(err)
                 }
-                return res.status(200).send({'message': 'Success'})
+                return res.status(200).send({'message': 'Success', pendingRequests: pendingRequests})
             })
         })
     }
@@ -92,7 +107,6 @@ exports.cancelPayment = (req, res, next) => {
 }
 
 exports.denyPayment = (req, res, next) => {
-    res.send('Lalalalal')
     var transactionId = req.body.transactionId
     if (req.loginType != Student){
       return res.status(401).send({'message': 'Invalid Action'})
