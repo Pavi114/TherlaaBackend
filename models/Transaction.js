@@ -25,10 +25,6 @@ const transactionSchema = new mongoose.Schema({
       type: Boolean,
       default: false
     },
-    isUpi: {
-      type: Boolean,
-      default: false
-    },
     dateCreated: Date,
     dateCompleted: Date
 });
