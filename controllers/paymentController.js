@@ -1,6 +1,12 @@
 const Vendor = require('../models/Vendor.js')
 const Student = require('../models/Student.js')
 const Transaction = require('../models/Transaction.js')
+const socketController = require('./socketController')
+
+const TRANSACTION_REGISTERED = 0;
+const TRANSACTION_COMPLETED = 1;
+const TRANSACTION_DENIED = 2;
+const TRANSACTION_CANCELLED = 3;
 
 exports.createPayment = (req, res) => {
     var userId = req.userId
@@ -51,7 +57,7 @@ exports.registerPayment = (req, res, next) => {
         return res.status(401).send({'message': 'Invalid Action'})
     }
     else{
-        Transaction.findById(transactionId, function(err, transaction){
+        Transaction.findById(transactionId, async function(err, transaction){
             if(err || !transaction){
                 console.log(err)
                 return res.status(500).send({'message': 'Unknown Error'})
@@ -60,26 +66,21 @@ exports.registerPayment = (req, res, next) => {
                 return res.status(403).send({'message': 'Invalid Action'})
             }
             var pendingRequests = []
-            Transaction.find({receiver: transaction.receiver, sender: userId, isActivated: true}, function(err,transactions){
-                if(err){
-                    console.log(err)
-                }
-                if(transactions){
-                    for (let pending of transactions) {
-                        pendingRequests.push({
-                            transactionId: pending._id,
-                            sender: pending.sender,
-                            amount: pending.amount
-                        })
-                    }
-                }
-            })
+            let transactions = await Transaction.find({receiver: transaction.receiver, sender: userId, isActivated: true});
+            for (let pending of transactions) {
+                pendingRequests.push({
+                    transactionId: pending._id,
+                    sender: pending.sender,
+                    amount: pending.amount
+                })
+            }
             transaction.sender = userId
             transaction.isActivated = true
             transaction.save(function(err){
                 if(err){
                     console.log(err)
                 }
+                socketController.sendSocketDataToUser(req.io, transaction.receiver, {type: TRANSACTION_REGISTERED, transactionId: transaction._id})
                 return res.status(200).send({'message': 'Success', pendingRequests: pendingRequests})
             })
         })
@@ -125,7 +126,7 @@ exports.getUpiPaymentDetails = (req, res, next) => {
   })
 }
 
-exports.payThruWallet = (req, res, next) => {
+exports.payThroughWallet = (req, res, next) => {
   var userId = req.userId
   var loginType = req.loginType
   var transactionId = req.body.transactionId
@@ -148,6 +149,7 @@ exports.payThruWallet = (req, res, next) => {
               else {
                   wallet.amount -= transaction.amount
                   receiverWallet.amount += transaction.amount
+                  socketController.sendSocketDataToUser(req.io, transaction.receiver, {type: TRANSACTION_COMPLETED, transactionId: transaction._id})
                   res.send({message: 'Success'})
               }
             })
@@ -172,6 +174,7 @@ exports.cancelPayment = (req, res, next) => {
             if(err){
                 console.log(err)
             }
+            socketController.sendSocketDataToUser(req.io, transaction.sender, {type: TRANSACTION_CANCELLED, transactionId: transaction._id})
             return res.status(200).send({'message': 'Success'})
         })
     })
@@ -191,6 +194,7 @@ exports.denyPayment = (req, res, next) => {
         else {
           transaction.isDenied = true
           transaction.save()
+          socketController.sendSocketDataToUser(req.io, transaction.receiver, {type: TRANSACTION_DENIED, transactionId: transaction._id})
           return res.send({message: "Success"})
         }
       })
