@@ -2,6 +2,7 @@ const Vendor = require('../models/Vendor.js')
 const Student = require('../models/Student.js')
 const Transaction = require('../models/Transaction.js')
 const socketController = require('./socketController')
+const keyPairHelpers = require('../helpers/keyPairHelpers')
 
 const TRANSACTION_REGISTERED = 0;
 const TRANSACTION_COMPLETED = 1;
