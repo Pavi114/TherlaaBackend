@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const paymentController = require('../controllers/paymentController.js')
+const walletRoutes = require('./wallet')
 
 router.post('/createPayment', paymentController.createPayment) // To generate bill and return QR (or just return payment ID and generate QR on phone, will probably be faster)
 router.post('/registerPayment', paymentController.registerPayment) // To register a payment by sending the payment ID (ours) and refId (UPIs)
@@ -10,6 +11,6 @@ router.post('/pendingRequests', paymentController.pendingRequests) // To get pen
 router.post('/pendingPayments', paymentController.pendingPayments) // To get pening payments on Server
 router.post('/completedTransactions', paymentController.completedTransactions)
 router.post('/getUpiPaymentDetails', paymentController.getUpiPaymentDetails)
-router.post('/payThroughWallet', paymentController.payThroughWallet)
+router.use(walletRoutes)
 
 module.exports = router
