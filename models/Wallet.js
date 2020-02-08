@@ -7,7 +7,8 @@ const walletSchema = new mongoose.Schema({
       type: Boolean,
       default: false
     },
-    lastLogin: Date
+    lastLogin: Date,
+    walletPin: String
 })
 
 module.exports = mongoose.model('Wallet', walletSchema)

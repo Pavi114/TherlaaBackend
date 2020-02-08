@@ -28,7 +28,9 @@ const transactionSchema = new mongoose.Schema({
     isUpi: {
       type: Boolean,
       default: false
-    }
+    },
+    dateCreated: Date,
+    dateCompleted: Date
 });
 
 module.exports = mongoose.model('Transaction', transactionSchema)
