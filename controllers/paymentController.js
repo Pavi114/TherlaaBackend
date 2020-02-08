@@ -103,7 +103,7 @@ exports.getUpiPaymentDetails = (req, res, next) => {
                 res.status(500).send({message: 'Unknown error'})
               }
               else {
-                res.send({upiId: vendor.upiId, amount: transaction.amount})
+                res.send({upiId: vendor.upiId, amount: transaction.amount, receiverId: userId})
               }
           })
       }
@@ -114,7 +114,7 @@ exports.getUpiPaymentDetails = (req, res, next) => {
               res.status(500).send({message: 'Unknown error'})
             }
             else {
-              res.send({upiId: student.upiId, amount: transaction.amount})
+              res.send({upiId: student.upiId, amount: transaction.amount, receiverId: userId})
             }
         })
       }
