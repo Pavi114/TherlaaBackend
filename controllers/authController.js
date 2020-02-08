@@ -1,6 +1,8 @@
 const imaps = require('imap-simple')
 const jwt = require('jsonwebtoken')
+const hash = require('password-hash')
 const Student = require('../models/Student.js')
+const Vendor = require('../models/Vendor.js')
 const { check, validationResult } = require('express-validator')
 const config = require('../config')
 
@@ -73,27 +75,47 @@ exports.studentLogin = (req, res) => {
 }
 
 exports.vendorRegister = (req, res, next) => {
-    res.send('Lalalalal')
-}
+    var username = req.body.username
+    var password = req.body.password
 
-exports.vendorRegister = (req, res, next) => {
-    res.send('Lalalalal')
-}
-
-exports.vendorRegister = (req, res, next) => {
-    res.send('Lalalalal')
-}
-
-exports.vendorRegister = (req, res, next) => {
-    res.send('Lalalalal')
-}
-
-exports.vendorRegister = (req, res, next) => {
-    res.send('Lalalalal')
+    var hashedPassword = hash.generate(password)
+    const response = {
+      message: 'Register Successful'
+    }
+    Vendor.create({username: username, password: hashedPassword}, function(err, newVendor){
+      if (err) {
+        console.log(err)
+        return res.status(500).send({'message': 'Unknown Error'})
+      }
+      response.APIToken = jwt.sign({ username: req.body.username, loginType: 'Vendor', time: Date.now() }, config.apiSecret)
+      res.status(200)
+      res.send(response)
+    })
 }
 
 exports.vendorLogin = (req, res, next) => {
-    res.send('Lalalalal')
+    var username = req.body.username
+    var password = req.body.password
+    const response = {
+      message: 'Login Successful'
+    }
+    Vendor.findOne({username: username}, function(err, vendor) {
+        if(err) {
+          console.log(err)
+          res.status(404).send({message: "Unknown error"})
+        }
+        if (hash.verify(password, vendor.password)) {
+          response.APIToken = jwt.sign({ username: req.body.username, loginType: 'Vendor', time: Date.now() }, config.apiSecret)
+          res.status(200)
+          res.send(response)
+        }
+        else {
+          const response = {
+            message: 'Invalid Credentials'
+          }
+          res.send(response)
+        }
+    })
 }
 
 exports.validateJWT = (req, res, next) => {
