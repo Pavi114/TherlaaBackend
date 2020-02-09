@@ -9,7 +9,7 @@ router.post('/vendorRegister', authController.vendorRegister)
 router.post('/vendorLogin', authController.vendorLogin)
 router.use('/pay', authController.validateJWT)
 router.use('/upi', authController.validateJWT)
-
+router.post('/setLoginPin', loginPinController.setLoginPin)
 router.post('/keyExchange', authController.validateJWT, loginPinController.verifyLoginPin, keyExchangeController.performKeyExchange)
 
 module.exports = router
