@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const studentSchema = new mongoose.Schema({
   rollNumber: String,
   upiId: String,
+  loginPin: String,
   lastLogin: Date
 });
 
