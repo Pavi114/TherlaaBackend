@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const authController = require('../controllers/authController.js')
-const keyExchangeRoutes = require('../controllers/keyExchangeController.js')
+const keyExchangeController = require('../controllers/keyExchangeController.js')
 const loginPinController = require('../controllers/loginPinController.js')
 
 router.post('/studentLogin', authController.validateStudentLogin, authController.studentLogin) // Return a json-web-token
