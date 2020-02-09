@@ -11,6 +11,7 @@ router.post('/pendingRequests', paymentController.pendingRequests) // To get pen
 router.post('/pendingPayments', paymentController.pendingPayments) // To get pening payments on Server
 router.post('/completedTransactions', paymentController.completedTransactions)
 router.post('/getUpiPaymentDetails', paymentController.getUpiPaymentDetails)
+router.post('/confirmUPIPayment', paymentController.confirmPayment)
 router.use(walletRoutes)
 
 module.exports = router
